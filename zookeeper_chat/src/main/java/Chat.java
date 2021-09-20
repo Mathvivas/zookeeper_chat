@@ -36,6 +36,7 @@ public class Chat {
 
     //construa o Scanner aqui
     private Chat (){
+        scanner = new Scanner(System.in);
     }
 
     //Mostra uma mensagem para o usuário, dizendo que ele deve escolher seu nome
@@ -45,7 +46,17 @@ public class Chat {
     //quando um nome válido for digitado, ele é atribuído à variável de instância usuário
     //deve criar um ZNode efêmero para representar o usuário
     private void capturaUsuario () throws InterruptedException, KeeperException{
-        //seu código aqui
+        boolean valido = false;
+        do {
+            System.out.println("\nDigite um nome de usuário: ");
+            usuario = scanner.nextLine();
+            if ( !usuario.contains("/") ) {
+                valido = !usuarioJaExiste(usuario);
+            }
+        } while (!valido);
+
+        String prefixo = String.format("%s/%s", ZNODE_USUARIOS, usuario);
+        String caminho = zooKeeper.create(prefixo, new byte[]{}, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
 
         //no final, esse método pode mostrar essa mensagem
         System.out.printf ("Oi, %s. Você entrou. Veja o que já aconteceu até então.\n", usuario);
@@ -54,7 +65,10 @@ public class Chat {
     //verifica se o nome de usuário especificado possui um ZNode na árvore do ZKeeper
     //você pode usar o método getChildren para isso
     private boolean usuarioJaExiste (String usuario) throws InterruptedException, KeeperException{
-        //seu código aqui
+        List<String> nomesExistentes = zooKeeper.getChildren(ZNODE_USUARIOS, false);
+        if ( nomesExistentes.contains(usuario) ) {
+            return true;
+        }
         //ao final, devolva uma expressão booleana
         return false;
     }
@@ -62,11 +76,11 @@ public class Chat {
     //veja os comentários para implementar esse método
     private void exibirHistorico () throws InterruptedException, KeeperException{
         //obter a lista de mensagens (getChildren)
-        List<String> datas = null; //chame o getChildren aqui
+        List<String> datas = zooKeeper.getChildren(ZNODE_CHAT, false); //chame o getChildren aqui
         //se estiver vazia, mostra a mensagem especificada
         if (datas.isEmpty()) System.out.println ("Não há mensagens.");
         //ordene pela data (você pode usar o sort de Collections que recebe a lista e um Comparator)
-        //ordene aqui
+        Collections.sort(datas);
         for (String data : datas){
             //obtém os dados do ZNode da vez (com getData)
             byte [] bytes = zooKeeper.getData(
@@ -77,8 +91,11 @@ public class Chat {
                             false
                     )
             );
+            String bytesEmString = new String(bytes);
+            System.out.println(bytesEmString);
             //formatar e exibir no padrão data: Usuário diz Oi, Tudo bem?
             //seu código aqui
+            //System.out.printf("%s: %s diz %s", data, );
             System.out.println("************************");
         }
     }
@@ -116,7 +133,8 @@ public class Chat {
 
     private void criarNosRaizes () throws InterruptedException, KeeperException{
         //criar os dois ZNodes (/chat e /usuarios) usando o método criarNoRaiz
-
+        criarNoRaiz(ZNODE_CHAT);
+        criarNoRaiz(ZNODE_USUARIOS);
     }
 
     private void registrarWatchers() throws InterruptedException, KeeperException{
@@ -149,7 +167,7 @@ public class Chat {
 
     private void exibirInstrucoes (){
         //um simples println para exibir as instruções
-
+        System.out.println(instrucoes);
     }
 
 
