@@ -1,6 +1,7 @@
 import org.apache.zookeeper.*;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -92,11 +93,13 @@ public class Chat {
                     )
             );
             String bytesEmString = new String(bytes);
-            System.out.println(bytesEmString);
+            //System.out.println(bytesEmString);
             //formatar e exibir no padrão data: Usuário diz Oi, Tudo bem?
             //seu código aqui
-            //System.out.printf("%s: %s diz %s", data, );
-            System.out.println("************************");
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(Long.valueOf(data));
+            System.out.printf("%s: %s diz %s", sdf.format(calendar.getTime()), usuario, bytesEmString);
+            System.out.println("\n************************");
         }
     }
 
@@ -112,16 +115,21 @@ public class Chat {
             //list: exibe o histórico de mensagens e as instruções
             if (opcao.startsWith("/list")){
                 //seu código aqui
+                exibirHistorico();
             }
             //send
             else if (opcao.startsWith("/send")){
                 //extrai a data atual do sistema (new Date())
-                // a representa como um número (new Date().getTime())
+                Date data = new Date();
+                // a representa como um número (new Date().getTime()) --> Milisegundos
+                long dataNumerica = data.getTime();
                 //e cria um ZNode persistente
                 //o nome do ZNode é o número que representa a data
+                String path = String.format("%s/%d", ZNODE_CHAT, dataNumerica);
                 //seu conteúdo pode ser algo como usuario:mensagem
                 String msg = opcao.substring(opcao.indexOf(" ") + 1);
-
+                String znode = zooKeeper.create(path, msg.getBytes(StandardCharsets.UTF_8),
+                        ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
             else{
                 System.out.println("Opção inválida.");
