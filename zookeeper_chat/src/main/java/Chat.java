@@ -148,23 +148,23 @@ public class Chat {
     private void registrarWatchers() throws InterruptedException, KeeperException{
         //registrar watcher persistente e recursivo no ZNode /usuarios
         //use o método addWatch
-
+        zooKeeper.addWatch(ZNODE_USUARIOS, historicoWatcher, AddWatchMode.PERSISTENT_RECURSIVE);
         //registrar um one-time trigger watch no ZNode /chat
         //use getChildren.
         //Use o watch historicoWatcher implementado logo a seguir
         zooKeeper.getChildren(ZNODE_CHAT, historicoWatcher);
 
     }
-    private  final Watcher historicoWatcher = new Watcher() {
+    private final Watcher historicoWatcher = new Watcher() {
         @Override
         public void process(WatchedEvent event) {
             try {
                 if (event.getState() == Event.KeeperState.SyncConnected){
                     //exibe histórico
-                    //exibe instruções
-                    //registra um novo watch one-time trigger no ZNode /chat
                     exibirHistorico();
+                    //exibe instruções
                     exibirInstrucoes();
+                    //registra um novo watch one-time trigger no ZNode /chat
                     zooKeeper.getChildren(ZNODE_CHAT, historicoWatcher);
                 }
             } catch (InterruptedException | KeeperException e) {
